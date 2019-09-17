@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="12" failures="0" time="19.527">
+  <testsuite name="src/verify-token.test.ts" errors="0" failures="0" skipped="0" timestamp="2019-09-17T14:17:24" time="0.971" tests="3">
+    <testcase classname="Token verifier - should reject invalid token" name="Token verifier - should reject invalid token" time="0.005">
+    </testcase>
+    <testcase classname="Token verifier - should detect bad keys" name="Token verifier - should detect bad keys" time="0.001">
+    </testcase>
+    <testcase classname="Token verifier - should reject token signature" name="Token verifier - should reject token signature" time="0.009">
+    </testcase>
+  </testsuite>
+  <testsuite name="src/user-management.test.ts" errors="0" failures="0" skipped="0" timestamp="2019-09-17T14:17:24" time="13.382" tests="9">
+    <testcase classname="Cognito User Management &gt; createUser - should create new user" name="Cognito User Management &gt; createUser - should create new user" time="1.108">
+    </testcase>
+    <testcase classname="Cognito User Management &gt; createUser - should auto-confirm user password after creation" name="Cognito User Management &gt; createUser - should auto-confirm user password after creation" time="2.726">
+    </testcase>
+    <testcase classname="Cognito User Management &gt; createUser - should create new user with given attributes" name="Cognito User Management &gt; createUser - should create new user with given attributes" time="0.543">
+    </testcase>
+    <testcase classname="Cognito User Management &gt; deleteUser - should delete user" name="Cognito User Management &gt; deleteUser - should delete user" time="0.791">
+    </testcase>
+    <testcase classname="Cognito User Management &gt; updateUser - should delete user" name="Cognito User Management &gt; updateUser - should delete user" time="1.153">
+    </testcase>
+    <testcase classname="Cognito User Management &gt; user groups - should add user to group" name="Cognito User Management &gt; user groups - should add user to group" time="1.03">
+    </testcase>
+    <testcase classname="Cognito User Management &gt; user groups - should remove user from group" name="Cognito User Management &gt; user groups - should remove user from group" time="1.615">
+    </testcase>
+    <testcase classname="Cognito User Management &gt; enable/disable user - should disable user" name="Cognito User Management &gt; enable/disable user - should disable user" time="1.23">
+    </testcase>
+    <testcase classname="Cognito User Management &gt; enable/disable user - should enable user" name="Cognito User Management &gt; enable/disable user - should enable user" time="1.585">
+    </testcase>
+  </testsuite>
+</testsuites>

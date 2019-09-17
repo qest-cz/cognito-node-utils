@@ -1,0 +1,16 @@
+src/**/*.js
+src/**/*.d.ts
+!src/typings/**/*.d.ts
+node_modules
+
+dist/
+.cache
+.idea
+.vscode
+
+coverage
+.nyc_output
+yarn-error.log
+cdk.output
+cdk.out/
+.env.test

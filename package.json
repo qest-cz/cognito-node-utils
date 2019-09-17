@@ -1,0 +1,67 @@
+{
+  "name": "@qest/cognito-node-utils",
+  "displayName": "@qest/cognito-node-utils",
+  "description": "Helpers for common Amazon Cognito use cases.",
+  "author": "Vít Habada <vithabada93@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/qest-cz/cognito-node-utils"
+  },
+  "version": "0.0.1",
+  "keywords": [
+    "aws",
+    "cognito"
+  ],
+  "license": "MIT",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prettier:run": "prettier all --write \"src/**/*.ts\"",
+    "prettier:check": "prettier all -l \"src/**/*.ts\"",
+    "tslint:run": "tslint --fix -c tslint.json -p .",
+    "tslint:check": "tslint -c tslint.json -p .",
+    "tsc:check": "tsc --noEmit",
+    "code:fix": "concurrently \"yarn tslint:run\" \"yarn prettier:run\"",
+    "code:check": "concurrently \"yarn prettier:check\" \"yarn tslint:check\" \"yarn tsc:check\"",
+    "test": "TS_NODE_TRANSPILE_ONLY=true yarn deploy-test-stack && jest --runInBand && yarn destroy-test-stack || yarn destroy-test-stack",
+    "deploy-test-stack": "cdk deploy --app=\"ts-node -r dotenv/config -T test/deploy-test-stack.ts dotenv_config_path=./env/.env.test\" --require-approval never > test/cdk.output 2>&1",
+    "destroy-test-stack": "cdk destroy --app=\"ts-node -r dotenv/config -T test/deploy-test-stack.ts dotenv_config_path=./env/.env.test\" --force"
+  },
+  "jest-junit": {
+    "suiteName": "jest tests",
+    "output": "coverage/junit.xml",
+    "classNameTemplate": "{classname} - {title}",
+    "titleTemplate": "{classname} - {title}",
+    "ancestorSeparator": " > ",
+    "usePathForSuiteName": "true"
+  },
+  "dependencies": {
+    "amazon-cognito-identity-js": "^3.0.15",
+    "aws-sdk": "^2.529.0",
+    "jsonwebtoken": "^8.5.1",
+    "jwk-to-pem": "^2.0.1",
+    "node-fetch": "^2.6.0"
+  },
+  "devDependencies": {
+    "@aws-cdk/aws-cognito": "^1.8.0",
+    "@aws-cdk/core": "^1.8.0",
+    "@types/jest": "^24.0.18",
+    "@types/node": "^12.7.2",
+    "aws-cdk": "^1.8.0",
+    "concurrently": "^4.1.2",
+    "dotenv": "^8.1.0",
+    "jest": "^24.9.0",
+    "jest-junit": "^8.0.0",
+    "prettier": "^1.18.2",
+    "rimraf": "^3.0.0",
+    "ts-jest": "^24.1.0",
+    "ts-node": "^8.3.0",
+    "tsc": "^1.20150623.0",
+    "tslint": "^5.19.0",
+    "tslint-config-airbnb": "^5.11.1",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-eslint-rules": "^5.4.0",
+    "typescript": "^3.5.3"
+  }
+}
