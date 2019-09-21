@@ -2,7 +2,7 @@ import { CognitoUserPool } from 'amazon-cognito-identity-js';
 import AWS, { CognitoIdentityServiceProvider } from 'aws-sdk';
 import * as fs from 'fs';
 import * as path from 'path';
-import { addUserToGroup, createUser, deleteUser, disableUser, enableUser, removeUserFromGroup, updateUser } from './user-management';
+import { completeUserNewPasswordChallenge, confirmUserEmail, createUser } from './user-management';
 
 require('dotenv').config({ path: './env/.env.test' }); // tslint:disable-line
 
@@ -39,218 +39,85 @@ beforeAll(() => {
     });
 });
 
-afterAll(() =>
-    Promise.all(
-        ['testuser', 'testuser2', 'testuser3'].map(
-            (Username) =>
-                cognitoidentityserviceprovider
-                    .adminDeleteUser({
-                        Username,
-                        UserPoolId: userPool.getUserPoolId(),
-                    })
-                    .promise()
-                    .catch(() => {}), // tslint:disable-line
-        ),
-    ),
-);
+const wait = (ms: number) => new Promise((resolve, _) => setTimeout(() => resolve(), ms));
 
 describe('Cognito User Management', () => {
-    describe('createUser', () => {
-        it('should create new user', async () => {
-            const user = await createUser(userPool, cognitoidentityserviceprovider)('testuser', 'ABCabc123/');
-
-            expect(user.User.Username).toBe('testuser');
+    it('should create new user', async () => {
+        const user = await createUser(cognitoidentityserviceprovider)({
+            userPoolId: userPool.getUserPoolId(),
+            username: 'testuser',
+            password: 'ABCabc123/',
         });
 
-        it('should auto-confirm user password after creation', async () => {
-            const user = await createUser(userPool, cognitoidentityserviceprovider)('testuser2', 'ABCabc123/', true);
-
-            expect(user.User.Username).toBe('testuser2');
-
-            const confirmed = await cognitoidentityserviceprovider
-                .adminGetUser({
-                    UserPoolId: userPool.getUserPoolId(),
-                    Username: 'testuser2',
-                })
-                .promise();
-
-            expect(confirmed.UserStatus).toBe('CONFIRMED');
-        });
-
-        it('should create new user with given attributes', async () => {
-            const user = await createUser(userPool, cognitoidentityserviceprovider)('testuser3', 'ABCabc123/', false, [
-                {
-                    Name: 'email',
-                    Value: 'testuser@test.com',
-                },
-            ]);
-
-            expect(user.User.Username).toBe('testuser3');
-            expect(user.User.Attributes).toContainEqual({ Name: 'email', Value: 'testuser@test.com' });
-        });
+        expect(user.User.Username).toBe('testuser');
     });
 
-    describe('deleteUser', () => {
-        it('should delete user', async () => {
-            try {
-                await createUser(userPool, cognitoidentityserviceprovider)('testuser', 'ABCabc123/');
-            } catch (err) {
-                // already exists
-            } finally {
-                await deleteUser(userPool, cognitoidentityserviceprovider)('testuser');
-            }
+    it('should confirm user password after creation', async () => {
+        const username = 'testuser2';
+        const password = 'ABCabc123/';
+
+        const user = await createUser(cognitoidentityserviceprovider)({
+            username,
+            password,
+            userPoolId: userPool.getUserPoolId(),
         });
+
+        await wait(1000);
+
+        await completeUserNewPasswordChallenge(userPool)({ username, password });
+
+        const confirmed = await cognitoidentityserviceprovider
+            .adminGetUser({
+                UserPoolId: userPool.getUserPoolId(),
+                Username: 'testuser2',
+            })
+            .promise();
+
+        expect(user.User.Username).toBe('testuser2');
+        expect(confirmed.UserStatus).toBe('CONFIRMED');
     });
 
-    describe('updateUser', () => {
-        it('should delete user', async () => {
-            try {
-                await createUser(userPool, cognitoidentityserviceprovider)('testuser', 'ABCabc123/', false, [
-                    {
-                        Name: 'email',
-                        Value: 'testuser@test.com',
-                    },
-                ]);
-            } catch (err) {
-                // already exists
-            } finally {
-                await updateUser(userPool, cognitoidentityserviceprovider)('testuser', [
-                    {
-                        Name: 'email',
-                        Value: 'somethingelse@test.com',
-                    },
-                ]);
-            }
-
-            const user = await cognitoidentityserviceprovider
-                .adminGetUser({
-                    UserPoolId: userPool.getUserPoolId(),
-                    Username: 'testuser',
-                })
-                .promise();
-
-            expect(user.UserAttributes).toContainEqual({ Name: 'email', Value: 'somethingelse@test.com' });
+    it('should create new user with given attributes', async () => {
+        await createUser(cognitoidentityserviceprovider)({
+            userPoolId: userPool.getUserPoolId(),
+            username: 'testuser3',
+            password: 'ABCabc123/',
+            attributes: { email: 'testuser3@test.com' },
         });
+
+        const newUser = await cognitoidentityserviceprovider
+            .adminGetUser({
+                UserPoolId: userPool.getUserPoolId(),
+                Username: 'testuser3',
+            })
+            .promise();
+
+        expect(newUser.Username).toBe('testuser3');
+        expect(newUser.UserAttributes).toContainEqual({ Name: 'email', Value: 'testuser3@test.com' });
     });
 
-    describe('user groups', () => {
-        it('should add user to group', async () => {
-            try {
-                await createUser(userPool, cognitoidentityserviceprovider)('testuser', 'ABCabc123/', false, [
-                    {
-                        Name: 'email',
-                        Value: 'testuser@test.com',
-                    },
-                ]);
-            } catch (err) {
-                // already exists
-            } finally {
-                await addUserToGroup(userPool, cognitoidentityserviceprovider)('testuser', 'administrators');
-            }
-
-            const response = await cognitoidentityserviceprovider
-                .adminListGroupsForUser({
-                    UserPoolId: userPool.getUserPoolId(),
-                    Username: 'testuser',
-                })
-                .promise();
-
-            expect(response.Groups.some(({ GroupName }) => GroupName === 'administrators')).toBe(true);
+    it('should confirm user email', async () => {
+        await createUser(cognitoidentityserviceprovider)({
+            userPoolId: userPool.getUserPoolId(),
+            username: 'testuser4',
+            password: 'ABCabc123/',
+            attributes: { email: 'testuser4@test.com' },
         });
 
-        it('should remove user from group', async () => {
-            try {
-                await createUser(userPool, cognitoidentityserviceprovider)('testuser', 'ABCabc123/', false, [
-                    {
-                        Name: 'email',
-                        Value: 'testuser@test.com',
-                    },
-                ]);
-            } catch (err) {
-                // already exists
-            } finally {
-                await addUserToGroup(userPool, cognitoidentityserviceprovider)('testuser', 'moderators');
-
-                const response = await cognitoidentityserviceprovider
-                    .adminListGroupsForUser({
-                        UserPoolId: userPool.getUserPoolId(),
-                        Username: 'testuser',
-                    })
-                    .promise();
-
-                expect(response.Groups.some(({ GroupName }) => GroupName === 'moderators')).toBe(true);
-            }
-
-            await removeUserFromGroup(userPool, cognitoidentityserviceprovider)('testuser', 'moderators');
-
-            const response = await cognitoidentityserviceprovider
-                .adminListGroupsForUser({
-                    UserPoolId: userPool.getUserPoolId(),
-                    Username: 'testuser',
-                })
-                .promise();
-
-            expect(response.Groups.some(({ GroupName }) => GroupName === 'moderators')).toBe(false);
-        });
-    });
-
-    describe('enable/disable user', () => {
-        it('should disable user', async () => {
-            try {
-                await createUser(userPool, cognitoidentityserviceprovider)('testuser', 'ABCabc123/');
-            } catch (err) {
-                // already exists
-            } finally {
-                const response = await cognitoidentityserviceprovider
-                    .adminGetUser({
-                        UserPoolId: userPool.getUserPoolId(),
-                        Username: 'testuser',
-                    })
-                    .promise();
-
-                expect(response.Enabled).toBe(true);
-            }
-
-            await disableUser(userPool, cognitoidentityserviceprovider)('testuser');
-
-            const response = await cognitoidentityserviceprovider
-                .adminGetUser({
-                    UserPoolId: userPool.getUserPoolId(),
-                    Username: 'testuser',
-                })
-                .promise();
-
-            expect(response.Enabled).toBe(false);
+        await confirmUserEmail(cognitoidentityserviceprovider)({
+            username: 'testuser4',
+            userPoolId: userPool.getUserPoolId(),
         });
 
-        it('should enable user', async () => {
-            try {
-                await createUser(userPool, cognitoidentityserviceprovider)('testuser', 'ABCabc123/');
-            } catch (err) {
-                // already exists
-            } finally {
-                await disableUser(userPool, cognitoidentityserviceprovider)('testuser');
+        const newUser = await cognitoidentityserviceprovider
+            .adminGetUser({
+                UserPoolId: userPool.getUserPoolId(),
+                Username: 'testuser4',
+            })
+            .promise();
 
-                const response = await cognitoidentityserviceprovider
-                    .adminGetUser({
-                        UserPoolId: userPool.getUserPoolId(),
-                        Username: 'testuser',
-                    })
-                    .promise();
-
-                expect(response.Enabled).toBe(false);
-            }
-
-            await enableUser(userPool, cognitoidentityserviceprovider)('testuser');
-
-            const response = await cognitoidentityserviceprovider
-                .adminGetUser({
-                    UserPoolId: userPool.getUserPoolId(),
-                    Username: 'testuser',
-                })
-                .promise();
-
-            expect(response.Enabled).toBe(true);
-        });
+        expect(newUser.Username).toBe('testuser4');
+        expect(newUser.UserAttributes).toContainEqual({ Name: 'email', Value: 'testuser4@test.com' });
+        expect(newUser.UserAttributes).toContainEqual({ Name: 'email_verified', Value: 'true' });
     });
 });
