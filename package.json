@@ -37,11 +37,8 @@
     "usePathForSuiteName": "true"
   },
   "dependencies": {
-    "amazon-cognito-identity-js": "^3.0.15",
-    "aws-sdk": "^2.529.0",
     "jsonwebtoken": "^8.5.1",
-    "jwk-to-pem": "^2.0.1",
-    "node-fetch": "^2.6.0"
+    "jwk-to-pem": "^2.0.1"
   },
   "devDependencies": {
     "@aws-cdk/aws-cognito": "^1.8.0",
