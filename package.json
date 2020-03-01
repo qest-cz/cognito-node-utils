@@ -7,7 +7,7 @@
     "type": "git",
     "url": "https://github.com/qest-cz/cognito-node-utils"
   },
-  "version": "0.0.4",
+  "version": "0.0.5",
   "keywords": [
     "aws",
     "cognito"
